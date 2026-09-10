@@ -12,7 +12,7 @@ import logging
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .models import CarMake, CarModel
-
+from djangoapp.restapis import get_request, post_review, analyze_review_sentiments
 from .populate import initiate
 
 
@@ -148,18 +148,19 @@ def get_dealer_reviews(request, dealer_id):
             "message": "Bad Request"
         })
 
-
 def add_review(request):
     if(request.user.is_anonymous == False):
         data = json.loads(request.body)
         try:
             response = post_review(data)
             return JsonResponse({"status":200})
-        except:
+        except Exception as e:
+            print("ADD_REVIEW ERROR:", e)
+            import traceback
+            traceback.print_exc()
             return JsonResponse({"status":401,"message":"Error in posting review"})
     else:
         return JsonResponse({"status":403,"message":"Unauthorized"})
-
 # # Update the `get_dealerships` view to render the index page with
 # a list of dealerships
 # def get_dealerships(request):

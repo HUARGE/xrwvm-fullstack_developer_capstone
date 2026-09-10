@@ -3,9 +3,8 @@
 import os
 from dotenv import load_dotenv
 import requests 
-from .restapis import get_request, analyze_review_sentiments
+
 load_dotenv()
-from .restapis import get_request, analyze_review_sentiments, post_review
 
 backend_url = os.getenv(
     'backend_url', default="http://localhost:3030")
