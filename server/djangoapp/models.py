@@ -1,6 +1,4 @@
 from django.db import models
-from django.utils.timezone import now
-import datetime
 
 
 class CarMake(models.Model):
@@ -16,7 +14,6 @@ class CarModel(models.Model):
         ('SEDAN', 'Sedan'),
         ('SUV', 'SUV'),
         ('WAGON', 'Wagon'),
-        
     ]
 
     car_make = models.ForeignKey(CarMake, on_delete=models.CASCADE)
