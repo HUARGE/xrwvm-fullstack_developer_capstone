@@ -1,23 +1,23 @@
-from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse
-from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth import logout
-from django.contrib import messages
-from datetime import datetime
-
-from django.http import JsonResponse
-from django.contrib.auth import login, authenticate
-import logging
 import json
+import logging
+
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
+from djangoapp.restapis import (
+    analyze_review_sentiments,
+    get_request,
+    post_review,
+)
 from .models import CarMake, CarModel
-from djangoapp.restapis import get_request, post_review, analyze_review_sentiments
 from .populate import initiate
 
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
+
 
 def get_cars(request):
     count = CarMake.objects.filter().count()
@@ -37,6 +37,7 @@ def get_cars(request):
 
     return JsonResponse({"CarModels": cars})
 
+
 # Create your views here.
 
 # Create a `login_request` view to handle sign in request
@@ -55,21 +56,17 @@ def login_user(request):
         data = {"userName": username, "status": "Authenticated"}
     return JsonResponse(data)
 
+
 # Create a `logout_request` view to handle sign out request
 def logout_request(request):
-    logout(request) # Terminate user session
-    data = {"userName":""} # Return empty username
+    logout(request)  # Terminate user session
+    data = {"userName": ""}  # Return empty username
     return JsonResponse(data)
 
-# ...
 
 # Create a `registration` view to handle sign up request
-# @csrf_exempt
-@csrf_exempt
 @csrf_exempt
 def registration(request):
-    context = {}
-
     # Load JSON data from the request body
     data = json.loads(request.body)
     username = data['userName']
@@ -78,15 +75,20 @@ def registration(request):
     last_name = data['lastName']
     email = data['email']
     username_exist = False
-    email_exist = False
     try:
         User.objects.get(username=username)
         username_exist = True
-    except:
+    except Exception:
         logger.debug("{} is new user".format(username))
 
     if not username_exist:
-        user = User.objects.create_user(username=username, first_name=first_name, last_name=last_name, password=password, email=email)
+        user = User.objects.create_user(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            password=password,
+            email=email
+        )
         login(request, user)
         data = {"userName": username, "status": "Authenticated"}
         return JsonResponse(data)
@@ -148,32 +150,20 @@ def get_dealer_reviews(request, dealer_id):
             "message": "Bad Request"
         })
 
+
 def add_review(request):
-    if(request.user.is_anonymous == False):
+    if not request.user.is_anonymous:
         data = json.loads(request.body)
         try:
-            response = post_review(data)
-            return JsonResponse({"status":200})
+            post_review(data)
+            return JsonResponse({"status": 200})
         except Exception as e:
             print("ADD_REVIEW ERROR:", e)
             import traceback
             traceback.print_exc()
-            return JsonResponse({"status":401,"message":"Error in posting review"})
+            return JsonResponse({
+                "status": 401,
+                "message": "Error in posting review"
+            })
     else:
-        return JsonResponse({"status":403,"message":"Unauthorized"})
-# # Update the `get_dealerships` view to render the index page with
-# a list of dealerships
-# def get_dealerships(request):
-# ...
-
-# Create a `get_dealer_reviews` view to render the reviews of a dealer
-# def get_dealer_reviews(request,dealer_id):
-# ...
-
-# Create a `get_dealer_details` view to render the dealer details
-# def get_dealer_details(request, dealer_id):
-# ...
-
-# Create a `add_review` view to submit a review
-# def add_review(request):
-# ...
+        return JsonResponse({"status": 403, "message": "Unauthorized"})
